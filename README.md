@@ -101,7 +101,8 @@ Examples include:
  GTF/GFF are BED variants, and are strictly tidy in nature to the best of the author's knowledge.
 
 
-One notable format that is not tidy is FASTQ/FASTQ. 
+One notable format that is not tidy is FASTQ/FASTQ.   
+
 **FASTA/FASTQ**:
  - While FASTA and FASTQ are not tidy as they aren't tables,
  do not have individual row as for observations, and contain a
@@ -193,12 +194,13 @@ for p in people:
   emit_to_binary(p);
 
 # And read in a file of persons with the following loop
-WHILE open(file) as INPUT and not END_OF_FILE:
+WHILE open(file) as INPUT and not END_OF_FILE{
   Person p;
   read_from_binary(INPUT, p);
+  
   # We could then choose where to store Person p, such as
   # in a list of Persons.
-
+};
 
 ```
 Figure 1: pseudocode for emitting and reading a simple tidy binary file format.
@@ -214,8 +216,8 @@ Extending a tidy format with new observations simply requires adding rows to a f
 Extending the format to include new variables involves adding columns. While this
 is somewhat difficult to code (as memory is row-oriented), the tidy verb `join()`
 facilitates such operations. A discussion of tidy verbs is beyond the scope of this
-document, but I encourage the reader to checkout the awesome [dplyr]() package and
-the [data wrangling cheatsheet]() for a discussion on the topic.
+document, but I encourage the reader to checkout the awesome [dplyr](https://dplyr.tidyverse.org) package and
+the [data wrangling cheatsheet](https://www.rstudio.com/wp-content/uploads/2015/02/data-wrangling-cheatsheet.pdf) for a discussion on the topic.
 
 ### Tidy observations are based on atomic entities
 An important tenet of tidy data is that each row is atomic. This means 
@@ -223,33 +225,78 @@ that every observation is the smallest unit of the data that contains all variab
 If different groupings of observations are required, the tidy verbs encourage aggregation
 of these atomic units rather than decomposition of more complex structures. For example,
 a VCF file contains rows that represent positions, not genes or chromosomes (groups of positions).
+Personally, I think this is easier to understand than rows containing multiple atomic entities.
+
+### Tidy data is language-agnostic
+While the tidy principles have gained the most traction in R,
+they are not bound to a specific language. The binary serialization example of Figure 1
+could be implemented in C++ or python (or R, or Julia, or Erlang, or Scala...). By having
+a common format, users can interchange their files with others who might not be familiar
+with their language of choice, with no need to worry about the availability of system libraries
+(e.g. Boost, ProtocolBuffers, cap'n proto) or language-lockin (e.g. .RData, python pickle).
 
 
 ### Notes on pitfalls of tidy data
 - Tidy data, when stored in raw files, are not easily appended to with new data.
-Joining data frames in a row-rise manner is not difficult. Appending new columsn, however,
+Joining data frames in a row-rise manner is not difficult. Appending new columns, however,
 is more challenging to program. Luckily, this has been addressed by the tidy verb `join()`
-where it is available. The header must also be rewritten when a file is column-appended.
+where it is available. The header must also be rewritten when a file is column-appended,
+although this can be worked around by using a tidy-translatable external header.
 
 
 ## When designing future genomics formats, remember tidy principles
+Many of the most persistent formats in genomics are tidy in nature. I think there are
+good reasons for this tendency. I would encourage people designing new formats -
+even if they are only for the configuration or output of their own tools - to consider
+applying tidy design principles when doing so.
 
+# Tidy genomic data should be paired with tidy phenotype data
+I will discuss the utility of pairing tidy genotype data with
+tidy phenotype data when performing analysis in another post.
+I hope the reader
+won't need much convincing to see that easy-to-read, easy-to-append,
+atomic data (so long as the genomic and phenotypic data share units)
+is easier than working with data that violates these principles.
 
-## Tidy genomic data should be paired with tidy phenotype data
-## The sample is the atomic unit of phenotype data
-All genomics starts with a biological sample. This
-may come from a single organism/tissue (e.g. a person's
-tumor or blood) or it may be a mixture of multiple
-biological entities as in a metagenomic ocean sample.
-
-## Intervals, positions, and alleles as the atomic units of genomic data
-
-## Reads as the atomic units of genomic data
 
 # Beyond just tidy - what to consider when desigining file formats
-## Can my format be easily serialized to text?
-## Is my data human readable?
-## Would it be straightforward to serialize my format to binary?
-## Does my format scale well with increasing data sizes?
-## Are the fields in my format of sufficent bit size to hold realistic values?
+In addition to tidyness, I think the following questions are important
+to answer when designing a file format:
+- Can my format be easily serialized to text?
+- In my data human readable? 
+
+These two questions are important for debugging, as it will (almost)
+inevitably be useful to be able to examine data manually during the
+developmet process. Data should be easily serializable to human-readable
+format. An example of a format I find to be easily serialized to text
+but not human-readable is XML. JSON slightly improve on this especially
+when pretty-printed. Tab-separated files are even more legible.
+
+- Would it be straightforward to serialize my format to binary?
+
+For performance reasons it is useful to be able to serialize to and from
+binary without intermediary conversion to strings.
+
+- Does my format scale well with increasing data sizes?
+- Are the fields in my format of sufficent bit size to hold realistic values?
+
+Formats should grow linearly or sub-linearly with input size. Where possible,
+repeated or constant fields should be reduced to reduce overall file size.
+The smallest data type of sufficient size should be used to represent variables
+(e.g. a number that is always less than 256 need not be represented by 64 bits).
+However, fields should also be large enough to hold all reasonable values. For example,
+while many genome sizes are <4 billion bases, and could fit in a 32-bit integer,
+a 64-bit integer should be used as genomes larger than this do exist.
+
+# Conclusions
+I hope the arguments laid out above assist those who find themselves designing
+output in new formats. While standard formats exist (and should be utilized!),
+there will likely never be a one-size-fits-all solution. However, even one-off
+solutions deserve good design. The tidy principles go a long way toward solving
+many of the issues that format designers will encounter. In addition, they help
+with other important considerations for large-scale data, such as indexability
+and extendability. If you want to talk more about format design please find me
+on twitter @erictdawson!
+
+
 
