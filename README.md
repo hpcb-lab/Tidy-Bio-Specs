@@ -235,6 +235,11 @@ a common format, users can interchange their files with others who might not be 
 with their language of choice, with no need to worry about the availability of system libraries
 (e.g. Boost, ProtocolBuffers, cap'n proto) or language-lockin (e.g. .RData, python pickle).
 
+### Tidy data is easily-parallizable
+Tidy data, when well designed, has rows which are independent. Linkages in the data can
+be described by a variable, at which point operations can be performed independently
+on rows or groups of rows. Tidy data abstracts well to the Map-Reduce paradigm: rows
+can be operated on independently, then reduced according to values a variable.
 
 ### Notes on pitfalls of tidy data
 - Tidy data, when stored in raw files, are not easily appended to with new data.
@@ -242,6 +247,33 @@ Joining data frames in a row-rise manner is not difficult. Appending new columns
 is more challenging to program. Luckily, this has been addressed by the tidy verb `join()`
 where it is available. The header must also be rewritten when a file is column-appended,
 although this can be worked around by using a tidy-translatable external header.
+- Tidy data has a hard time describing dependencies when poorly designed.
+- Tidy data is not the always obvious abstract.
+- Tidy data, at first glance, appears to fail when metadata is incorporated into a dataset.
+For example, repeating a field for "file creation date" for every row in a given file
+seems extranous. However, I believe this issue can be solved, and will briefly address how
+in the next section.
+
+### An intro to Tidy Chemistry
+Let us imagine each tidy
+observation (row) as an atom.
+A tidy dataframe is a collection of atoms, without
+meaning - it is simply a collection, akin to a a mol of atoms.
+Properties at this level only describe the set - they might have a mean, or a sum,
+but they do not have higher-order meaning at his point.
+
+Let us now imagine a molecule. A molecule is composed of atoms but has properties
+greater than a simple collection of the atoms without structure. I propose that dataframes
+of dataframes are like molecules - as we can build molecules from atoms, we can build
+tidy dataframes of atomic dataframes, and these dataframes will have meaning greater
+than their components. These tidy molecules have the same properties of our atoms (e.g.
+they may be amenable to summary statistics, as their rows are independent).
+
+We can build increasingly complex structures from the basic tidy atoms. To push
+a worn analogy farther, we can build tidy proteins and even tidy organisms. Such systems
+already exist in the form of relational databases, C structs, Python classes, etc. This
+data is tidy *within* each dataframe, and is *tidy-translatable* across all levels of the
+dataframes.
 
 
 ## When designing future genomics formats, remember tidy principles
